@@ -1,0 +1,25 @@
+com/gianvittorio/grpc/greeting/client/GreetingClient.java
+ com.gianvittorio.grpc.greeting.client.GreetingClient
+com/proto/dummy/Dummy.java
+ com.proto.dummy.Dummy
+com/proto/dummy/DummyMessage.java
+ com.proto.dummy.DummyMessage
+ com.proto.dummy.DummyMessage$1
+ com.proto.dummy.DummyMessage$Builder
+com/proto/dummy/DummyServiceGrpc.java
+ com.proto.dummy.DummyServiceGrpc
+ com.proto.dummy.DummyServiceGrpc$1
+ com.proto.dummy.DummyServiceGrpc$2
+ com.proto.dummy.DummyServiceGrpc$3
+ com.proto.dummy.DummyServiceGrpc$DummyServiceBaseDescriptorSupplier
+ com.proto.dummy.DummyServiceGrpc$DummyServiceBlockingStub
+ com.proto.dummy.DummyServiceGrpc$DummyServiceFileDescriptorSupplier
+ com.proto.dummy.DummyServiceGrpc$DummyServiceFutureStub
+ com.proto.dummy.DummyServiceGrpc$DummyServiceImplBase
+ com.proto.dummy.DummyServiceGrpc$DummyServiceMethodDescriptorSupplier
+ com.proto.dummy.DummyServiceGrpc$DummyServiceStub
+ com.proto.dummy.DummyServiceGrpc$MethodHandlers
+com/proto/dummy/DummyMessageOrBuilder.java
+ com.proto.dummy.DummyMessageOrBuilder
+com/gianvittorio/grpc/greeting/server/GreetingServer.java
+ com.gianvittorio.grpc.greeting.server.GreetingServer
