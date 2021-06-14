@@ -1,6 +1,5 @@
 package com.gianvittorio.grpc.calculator.server;
 
-import com.proto.calculator.server.CalculatorServiceImpl;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
