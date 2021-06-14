@@ -3,7 +3,7 @@ package com.gianvittorio.grpc.calculator.server;
 import com.proto.calculator.*;
 import io.grpc.stub.StreamObserver;
 
-public class CalculatorServiceImpl extends CalculatorServiceGrpc.CalculatorServiceImplBase  {
+public class CalculatorServiceImpl extends CalculatorServiceGrpc.CalculatorServiceImplBase {
 
     @Override
     public void sum(SumRequest request, StreamObserver<SumResponse> responseObserver) {
@@ -33,5 +33,35 @@ public class CalculatorServiceImpl extends CalculatorServiceGrpc.CalculatorServi
         }
 
         responseObserver.onCompleted();
+    }
+
+    @Override
+    public StreamObserver<ComputeAverageRequest> computeAverage(StreamObserver<ComputeAverageResponse> responseObserver) {
+        return new StreamObserver<ComputeAverageRequest>() {
+
+            private int sum = 0,
+                    count = 0;
+
+            @Override
+            public void onNext(ComputeAverageRequest value) {
+                sum += value.getNumber();
+
+                ++count;
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                double average = (double) (sum) / count;
+
+                responseObserver.onNext(ComputeAverageResponse.newBuilder().setAverage(average).build());
+
+                responseObserver.onCompleted();
+            }
+        };
     }
 }
