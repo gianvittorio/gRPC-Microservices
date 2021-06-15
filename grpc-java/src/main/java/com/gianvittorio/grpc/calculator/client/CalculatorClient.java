@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
@@ -21,11 +22,12 @@ public class CalculatorClient implements Runnable {
 
         //doUnaryCall(channel);
         //doStreamingServerCall(channel);
-        try {
-            doStreamingClientCall(channel);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            doStreamingClientCall(channel);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+        doStreamingBiDiCall(channel);
 
         channel.shutdown();
     }
@@ -91,10 +93,64 @@ public class CalculatorClient implements Runnable {
         });
 
         IntStream.range(0, 10_000)
-                .forEach(i ->  computeAverageRequestStreamObserver.onNext(ComputeAverageRequest.newBuilder().setNumber(i).build()));
+                .forEach(i -> computeAverageRequestStreamObserver.onNext(ComputeAverageRequest.newBuilder().setNumber(i).build()));
 
         computeAverageRequestStreamObserver.onCompleted();
 
         latch.await(3, TimeUnit.SECONDS);
+    }
+
+    private void doStreamingBiDiCall(ManagedChannel channel) {
+
+        CalculatorServiceGrpc.CalculatorServiceStub asyncClient = CalculatorServiceGrpc.newStub(channel);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<FindMaximumRequest> requestStreamObserver = asyncClient.findMaximum(new StreamObserver<FindMaximumResponse>() {
+
+            @Override
+            public void onNext(FindMaximumResponse value) {
+                System.out.println("Got new maximum from server:");
+                System.out.println(value.getMaximum());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server is done sending messages");
+                latch.countDown();
+            }
+        });
+
+        final Random random = new Random();
+        IntStream.generate(() -> random.nextInt(100))
+                .limit(20)
+                .forEach(number -> {
+                    System.out.println("Sending number: " + number);
+
+                    requestStreamObserver.onNext(FindMaximumRequest
+                            .newBuilder()
+                            .setNumber(number)
+                            .build()
+                    );
+
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        requestStreamObserver.onCompleted();
+
+        try {
+            latch.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

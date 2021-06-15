@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 public class GreetingClient implements Runnable {
 
@@ -28,11 +29,8 @@ public class GreetingClient implements Runnable {
         System.out.println("Creating stub");
 //        doUnaryCall(channel);
 //        doServerStreamingCall(channel);
-        try {
-            doClientStreamingCall(channel);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        //doClientStreamingCall(channel);
+        doBiDiStreamingCall(channel);
 
         System.out.println("Shutting down channel");
         channel.shutdown();
@@ -77,7 +75,7 @@ public class GreetingClient implements Runnable {
         System.out.println(response.getResult());
     }
 
-    private void doClientStreamingCall(ManagedChannel channel) throws InterruptedException {
+    private void doClientStreamingCall(ManagedChannel channel) {
 
         // Create a async client stub
         final GreetServiceGrpc.GreetServiceStub asyncClient = GreetServiceGrpc.newStub(channel);
@@ -136,6 +134,62 @@ public class GreetingClient implements Runnable {
         // we tell the server the client is done sending data
         requestStreamObserver.onCompleted();
 
-        countDownLatch.await(3l, TimeUnit.SECONDS);
+        try {
+            countDownLatch.await(3l, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void doBiDiStreamingCall(ManagedChannel channel) {
+
+        GreetServiceGrpc.GreetServiceStub asyncClient = GreetServiceGrpc.newStub(channel);
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<GreetEveryoneRequest> requestStreamObserver = asyncClient.greetEveryone(new StreamObserver<GreetEveryoneResponse>() {
+            @Override
+            public void onNext(GreetEveryoneResponse value) {
+                System.out.println("Response from server:");
+                System.out.println(value.getResult());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server is done sending data");
+
+                latch.countDown();
+            }
+        });
+
+        Stream.of("Stephane", "Mark", "John", "Patricia")
+                .forEach(
+                        name -> {
+                            System.out.println("Sending " + name);
+                            requestStreamObserver.onNext(
+                                    GreetEveryoneRequest.newBuilder()
+                                            .setGreeting(Greeting.newBuilder().setFirstName(name).build())
+                                            .build()
+                            );
+
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                );
+
+        requestStreamObserver.onCompleted();
+
+        try {
+            latch.await(3l, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
