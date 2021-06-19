@@ -25,9 +25,11 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 
     // gRPC
-    implementation 'io.grpc:grpc-netty-shaded:1.38.0'
+    implementation 'io.grpc:grpc-netty-shaded:1.38.0' // included SSL libraries
     implementation 'io.grpc:grpc-protobuf:1.38.0'
     implementation 'io.grpc:grpc-stub:1.38.0'
+    implementation 'io.grpc:grpc-services:1.38.0' // reflection
+
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 }
 

@@ -3,6 +3,7 @@ package com.gianvittorio.grpc.calculator.client;
 import com.proto.calculator.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 
 import java.util.Random;
@@ -16,7 +17,7 @@ public class CalculatorClient implements Runnable {
 
     @Override
     public void run() {
-        channel = ManagedChannelBuilder.forAddress("localhost", 50053)
+        channel = ManagedChannelBuilder.forAddress("localhost", 50056)
                 .usePlaintext()
                 .build();
 
@@ -27,7 +28,9 @@ public class CalculatorClient implements Runnable {
 //        } catch (InterruptedException e) {
 //            e.printStackTrace();
 //        }
-        doStreamingBiDiCall(channel);
+//        doStreamingBiDiCall(channel);
+
+        doErrorCall(channel);
 
         channel.shutdown();
     }
@@ -152,5 +155,20 @@ public class CalculatorClient implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void doErrorCall(ManagedChannel channel) {
+
+        CalculatorServiceGrpc.CalculatorServiceBlockingStub blockingStub = CalculatorServiceGrpc.newBlockingStub(channel);
+
+        int number = -1;
+
+        try {
+            blockingStub.squareRoot(SquareRootRequest.newBuilder().setNumber(number).build());
+        } catch (StatusRuntimeException e) {
+            System.out.println("Got an exception for square root!");
+            e.printStackTrace();
+        }
+
     }
 }

@@ -1,8 +1,7 @@
 package com.gianvittorio.grpc.greeting.client;
 
 import com.proto.greet.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 
 import java.util.concurrent.CountDownLatch;
@@ -22,15 +21,26 @@ public class GreetingClient implements Runnable {
 
     @Override
     public void run() {
-        channel = ManagedChannelBuilder.forAddress("localhost", 50052)
+        channel = ManagedChannelBuilder.forAddress("localhost", 50054)
                 .usePlaintext()
                 .build();
 
+//        ManagedChannel secureChannel = null;
+//        try {
+//            secureChannel = NettyChannelBuilder.forAddress("localhost", 50005)
+//                    .sslContext(GrpcSslContexts.forClient().trustManager(new File("ssl/ca.crt")).build()).build();
+//        } catch (SSLException e) {
+//            e.printStackTrace();
+//        }
+
         System.out.println("Creating stub");
-//        doUnaryCall(channel);
+        doUnaryCall(channel);
 //        doServerStreamingCall(channel);
         //doClientStreamingCall(channel);
-        doBiDiStreamingCall(channel);
+        //doBiDiStreamingCall(channel);
+        //doUnaryCallWithDeadline(channel);
+
+//        doUnaryCall(secureChannel);
 
         System.out.println("Shutting down channel");
         channel.shutdown();
@@ -190,6 +200,56 @@ public class GreetingClient implements Runnable {
             latch.await(3l, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+
+    private void doUnaryCallWithDeadline(ManagedChannel channel) {
+
+        GreetServiceGrpc.GreetServiceBlockingStub blockingStub = GreetServiceGrpc.newBlockingStub(channel);
+
+        // first call (3000 ms deadline)
+        try {
+            System.out.println("Sending a request with a deadline of 3000ms");
+            GreetWithDeadlineResponse response = blockingStub.withDeadline(Deadline.after(3000, TimeUnit.MILLISECONDS))
+                    .greetWithDeadline(
+                            GreetWithDeadlineRequest.newBuilder()
+                                    .setGreeting(Greeting.newBuilder()
+                                            .setFirstName("Stephane")
+                                            .getDefaultInstanceForType()
+                                    )
+                                    .build()
+                    );
+
+            System.out.println(response.getResult());
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus() == Status.DEADLINE_EXCEEDED) {
+                System.out.println("Deadline has beeen exceeded, we don't want the response");
+            } else {
+                e.printStackTrace();
+            }
+        }
+
+        // first call (100 ms deadline)
+        try {
+            System.out.println("Sending a request with a deadline of 500ms");
+            GreetWithDeadlineResponse response = blockingStub.withDeadline(Deadline.after(100, TimeUnit.MILLISECONDS))
+                    .greetWithDeadline(
+                            GreetWithDeadlineRequest.newBuilder()
+                                    .setGreeting(Greeting.newBuilder()
+                                            .setFirstName("Stephane")
+                                            .getDefaultInstanceForType()
+                                    )
+                                    .build()
+                    );
+
+            System.out.println(response.getResult());
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus() == Status.DEADLINE_EXCEEDED) {
+                System.out.println("Deadline has beeen exceeded, we don't want the response");
+            } else {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.gianvittorio.grpc.greeting.server;
 
 import com.proto.greet.*;
+import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 
 import java.util.concurrent.TimeUnit;
@@ -111,5 +112,36 @@ public class GreetingServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
         };
 
         return requestStreamObserver;
+    }
+
+    @Override
+    public void greetWithDeadline(GreetWithDeadlineRequest request, StreamObserver<GreetWithDeadlineResponse> responseObserver) {
+
+        Context current = Context.current();
+
+        try {
+            for (int i = 0; i < 3; ++i) {
+                if (!current.isCancelled()) {
+
+                    System.out.println("sleep for 100 ms");
+                    TimeUnit.MILLISECONDS.sleep(100l);
+
+                    continue;
+                }
+
+                return;
+            }
+
+            System.out.println("send response");
+            responseObserver.onNext(
+                    GreetWithDeadlineResponse.newBuilder()
+                            .setResult("Hello " + request.getGreeting().getFirstName())
+                            .build()
+            );
+
+            responseObserver.onCompleted();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
