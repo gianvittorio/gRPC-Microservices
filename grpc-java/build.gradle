@@ -30,6 +30,9 @@ dependencies {
     implementation 'io.grpc:grpc-stub:1.38.0'
     implementation 'io.grpc:grpc-services:1.38.0' // reflection
 
+    implementation group: 'org.mongodb', name: 'mongodb-driver-sync', version: '4.2.3'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.31'
+
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
 }
 
