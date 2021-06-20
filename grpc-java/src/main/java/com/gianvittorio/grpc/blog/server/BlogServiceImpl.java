@@ -4,6 +4,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
 import com.proto.blog.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
@@ -48,17 +49,17 @@ public class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
     @Override
     public void readBlog(ReadBlogRequest request, StreamObserver<ReadBlogResponse> responseObserver) {
         System.out.println("Received read blog request");
-        String id = request.getBlogId();
+        String blogId = request.getBlogId();
 
         System.out.println("Searching for a blog");
         Document result = null;
         try {
-            result = collection.find(eq("_id", new ObjectId(id)))
+            result = collection.find(eq("_id", new ObjectId(blogId)))
                     .first();
         } catch (Exception e) {
             responseObserver.onError(
                     Status.NOT_FOUND
-                            .withDescription(String.format("The blog with the corresponding id: %d was not found", id))
+                            .withDescription("The blog with the corresponding id was not found")
                             .augmentDescription(e.getLocalizedMessage())
                             .asRuntimeException()
             );
@@ -68,7 +69,7 @@ public class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
             System.out.println("Blog not found");
             responseObserver.onError(
                     Status.NOT_FOUND
-                            .withDescription(String.format("The blog with the corresponding id: %d was not found", id))
+                            .withDescription("The blog with the corresponding id was not found")
                             .asRuntimeException()
             );
 
@@ -135,6 +136,62 @@ public class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
         System.out.println("Replaced!");
 
         responseObserver.onNext(UpdateBlogResponse.newBuilder().setBlog(getBlog(replacement)).build());
+
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void deleteBlog(DeleteBlogRequest request, StreamObserver<DeleteBlogResponse> responseObserver) {
+
+        System.out.println("Received Delete Blog Response");
+        String blogId = request.getBlogId();
+
+        DeleteResult result = null;
+        try {
+            result = collection.deleteOne(eq("_id", new ObjectId(blogId)));
+        } catch (Exception e) {
+
+            System.out.println("Blog not found");
+            responseObserver.onError(
+                    Status.NOT_FOUND
+                            .withDescription("The blog with the corresponding id was not found")
+                            .augmentDescription(e.getLocalizedMessage())
+                            .asRuntimeException()
+            );
+        }
+
+        if (result == null || result.getDeletedCount() == 0) {
+            responseObserver.onError(
+                    Status.NOT_FOUND
+                            .withDescription("The blog with the corresponding id was not found")
+                            .asRuntimeException()
+            );
+
+            return;
+        }
+
+
+        System.out.println("Blog was deleted");
+        responseObserver.onNext(DeleteBlogResponse.newBuilder().setBlogId(blogId).build());
+
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void listBlog(ListBlogRequest request, StreamObserver<ListBlogResponse> responseObserver) {
+
+        System.out.println("Received List Blog request");
+
+        collection.find()
+                .iterator()
+                .forEachRemaining(
+                        document -> {
+                            responseObserver.onNext(
+                                    ListBlogResponse.newBuilder()
+                                            .setBlog(getBlog(document))
+                                            .build()
+                            );
+                        });
 
         responseObserver.onCompleted();
     }

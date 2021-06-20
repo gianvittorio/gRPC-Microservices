@@ -36,9 +36,9 @@ public class BlogClient implements Runnable {
 
         System.out.println(readBlogResponse);
 
-//        ReadBlogResponse readBlogResponseNotFound = blogClient.readBlog(ReadBlogRequest.newBuilder().setBlogId("60ce9a3cf842b908a190e2b0").build());
+//        ReadBlogResponse readBlogResponseNotFoundAfterDeletion = blogClient.readBlog(ReadBlogRequest.newBuilder().setBlogId("60ce9a3cf842b908a190e2b0").build());
 //
-//        System.out.println(readBlogResponseNotFound);
+//        System.out.println(readBlogResponseNotFoundAfterDeletion);
 
         Blog newBlog = Blog.newBuilder()
                 .setId(blogId)
@@ -50,11 +50,31 @@ public class BlogClient implements Runnable {
         System.out.println("Updating blog...");
         UpdateBlogResponse updateBlogResponse = blogClient.updateBlog(
                 UpdateBlogRequest.newBuilder()
-                .setBlog(newBlog)
-                .build());
+                        .setBlog(newBlog)
+                        .build());
 
         System.out.println("Updated blog");
         System.out.println(updateBlogResponse.toString());
+
+        System.out.println("Deleting blog");
+        DeleteBlogResponse deleteBlogResponse = blogClient.deleteBlog(
+                DeleteBlogRequest.newBuilder()
+                        .setBlogId(blogId)
+                        .build()
+        );
+
+        System.out.println("Deleted blog");
+
+//        ReadBlogResponse readBlogResponseNotFoundAfterDeletion = blogClient.readBlog(ReadBlogRequest.newBuilder().setBlogId(blogId).build());
+//
+
+        System.out.println("Listing blogs");
+        blogClient.listBlog(
+                ListBlogRequest.newBuilder().build()
+        )
+                .forEachRemaining(
+                        listBlogResponse -> System.out.println(listBlogResponse.getBlog().toString())
+                );
 
         channel.shutdown();
     }
